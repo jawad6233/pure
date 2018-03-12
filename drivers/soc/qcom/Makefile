@@ -28,6 +28,7 @@ obj-$(CONFIG_SOC_BUS)  +=      socinfo.o
 obj-$(CONFIG_MSM_BOOT_STATS) += boot_stats.o
 obj-$(CONFIG_MSM_BOOT_TIME_MARKER) += boot_marker.o
 obj-$(CONFIG_MSM_HYP_DEBUG) += hyp-debug.o
+obj-$(CONFIG_ASMP)         += autosmp.o 
 obj-$(CONFIG_ARCH_MSM8996) += kryo-l2-accessors.o
 obj-$(CONFIG_MSM_RPM_SMD) +=	rpm-smd.o
 obj-$(CONFIG_MSM_EVENT_TIMER) += event_timer.o
@@ -91,6 +92,10 @@ ifdef CONFIG_MSM_SUBSYSTEM_RESTART
 	obj-y += subsystem_restart.o
 	obj-y += ramdump.o
 endif
+
+obj-$(CONFIG_SERIAL_NUM) += serial_num.o
+obj-$(CONFIG_SECBOOT_FUSE) += secboot_fuse.o
+obj-$(CONFIG_CPUMAXFREQ) += cpumaxfreq.o
 
 obj-$(CONFIG_MSM_BGCOM_INTERFACE) += bgcom_interface.o
 obj-$(CONFIG_MSM_SERVICE_NOTIFIER) += service-notifier.o

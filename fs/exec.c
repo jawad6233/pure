@@ -56,6 +56,7 @@
 #include <linux/pipe_fs_i.h>
 #include <linux/oom.h>
 #include <linux/compat.h>
+#include <linux/ksm.h>
 
 #include <asm/uaccess.h>
 #include <asm/mmu_context.h>
@@ -988,6 +989,15 @@ static int de_thread(struct task_struct *tsk)
 		leader->group_leader = tsk;
 
 		tsk->exit_signal = SIGCHLD;
+		/*
+		 * need to delete leader from adj tree, because it will not be
+		 * group leader (exit_signal = -1) soon. release_task(leader)
+		 * can't delete it.
+		 */
+		spin_lock_irq(lock);
+		delete_from_adj_tree(leader);
+		add_2_adj_tree(tsk);
+		spin_unlock_irq(lock);
 		leader->exit_signal = -1;
 
 		BUG_ON(leader->exit_state != EXIT_ZOMBIE);
@@ -1159,6 +1169,7 @@ void setup_new_exec(struct linux_binprm * bprm)
 	/* An exec changes our domain. We are no longer part of the thread
 	   group */
 	current->self_exec_id++;
+
 	flush_signal_handlers(current, 0);
 }
 EXPORT_SYMBOL(setup_new_exec);

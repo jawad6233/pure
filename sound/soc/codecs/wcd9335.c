@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
  *
@@ -157,8 +158,8 @@ enum {
 };
 
 enum tasha_sido_voltage {
-	SIDO_VOLTAGE_SVS_MV = 950,
-	SIDO_VOLTAGE_NOMINAL_MV = 1100,
+	SIDO_VOLTAGE_SVS_MV = 1000,
+	SIDO_VOLTAGE_NOMINAL_MV = 1250,
 };
 
 static enum codec_variant codec_ver;

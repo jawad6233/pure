@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -47,7 +47,7 @@
 #define QUAT_MI2S_ID	(1 << 3)
 #define QUIN_MI2S_ID	(1 << 4)
 
-#define DEFAULT_MCLK_RATE 9600000
+#define DEFAULT_MCLK_RATE 12288000
 
 #define WCD_MBHC_DEF_RLOADS 5
 #define MAX_WSA_CODEC_NAME_LENGTH 80
@@ -55,9 +55,10 @@
 
 
 #if defined(CONFIG_AW87319)
-#define EXT_CLASS_D_EN_DELAY 13000
-#define EXT_CLASS_D_DIS_DELAY 3000
-#define EXT_CLASS_D_DELAY_DELTA 2000
+//This config will provide 50% duty cycle, incrasing fidelity.
+#define EXT_CLASS_D_EN_DELAY 7000
+#define EXT_CLASS_D_DIS_DELAY 7000
+#define EXT_CLASS_D_DELAY_DELTA 500
 
 extern unsigned char AW87319_Audio_Speaker(void);
 #endif
@@ -74,8 +75,8 @@ static int msm_ter_mi2s_tx_ch = 1;
 static int msm_pri_mi2s_rx_ch = 1;
 static int msm_proxy_rx_ch = 2;
 static int msm_vi_feed_tx_ch = 2;
-static int mi2s_rx_bit_format = SNDRV_PCM_FORMAT_S16_LE;
-static int mi2s_rx_bits_per_sample = 16;
+static int mi2s_rx_bit_format = SNDRV_PCM_FORMAT_S24_LE;
+static int mi2s_rx_bits_per_sample = 32;
 static int mi2s_rx_sample_rate = SAMPLING_RATE_48KHZ;
 
 static atomic_t quat_mi2s_clk_ref;
@@ -268,7 +269,7 @@ done:
 int is_ext_spk_gpio_support(struct platform_device *pdev,
 			struct msm8916_asoc_mach_data *pdata)
 {
-	const char *spk_ext_pa = "qcom,msm-spk-ext-pa";
+	const char *spk_ext_pa = "ext-spk-amp-gpio";
 
 	pr_debug("%s:Enter\n", __func__);
 
@@ -292,7 +293,6 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 {
 	struct snd_soc_card *card = codec->component.card;
 	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
-	int ret;
 
 	if (!gpio_is_valid(pdata->spk_ext_pa_gpio)) {
 		pr_err("%s: Invalid gpio: %d\n", __func__,
@@ -304,21 +304,12 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 		enable ? "Enable" : "Disable");
 
 	if (enable) {
-		ret = msm_gpioset_activate(CLIENT_WCD_INT, "ext_spk_gpio");
-		if (ret) {
-			pr_err("%s: gpio set cannot be de-activated %s\n",
-					__func__, "ext_spk_gpio");
-			return ret;
-		}
+		AW87319_Audio_Speaker();
 		gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
+		udelay(2);
 	} else {
+		gpio_direction_output(pdata->spk_ext_pa_gpio, false);
 		gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
-		ret = msm_gpioset_suspend(CLIENT_WCD_INT, "ext_spk_gpio");
-		if (ret) {
-			pr_err("%s: gpio set cannot be de-activated %s\n",
-					__func__, "ext_spk_gpio");
-			return ret;
-		}
 	}
 	return 0;
 }
@@ -898,11 +889,11 @@ static int mi2s_rx_bit_format_get(struct snd_kcontrol *kcontrol,
 		break;
 
 	case SNDRV_PCM_FORMAT_S24_LE:
+	default:
 		ucontrol->value.integer.value[0] = 1;
 		break;
 
 	case SNDRV_PCM_FORMAT_S16_LE:
-	default:
 		ucontrol->value.integer.value[0] = 0;
 		break;
 	}
@@ -923,11 +914,11 @@ static int mi2s_rx_bit_format_put(struct snd_kcontrol *kcontrol,
 		mi2s_rx_bits_per_sample = 32;
 		break;
 	case 1:
+	default:
 		mi2s_rx_bit_format = SNDRV_PCM_FORMAT_S24_LE;
 		mi2s_rx_bits_per_sample = 32;
 		break;
 	case 0:
-	default:
 		mi2s_rx_bit_format = SNDRV_PCM_FORMAT_S16_LE;
 		mi2s_rx_bits_per_sample = 16;
 		break;
@@ -1057,13 +1048,13 @@ static int mi2s_rx_sample_rate_get(struct snd_kcontrol *kcontrol,
 
 	switch (mi2s_rx_sample_rate) {
 	case SAMPLING_RATE_96KHZ:
+	default:
 		sample_rate_val = 1;
 		break;
 	case SAMPLING_RATE_192KHZ:
 		sample_rate_val = 2;
 		break;
 	case SAMPLING_RATE_48KHZ:
-	default:
 		sample_rate_val = 0;
 		break;
 	}
@@ -1080,13 +1071,13 @@ static int mi2s_rx_sample_rate_put(struct snd_kcontrol *kcontrol,
 {
 	switch (ucontrol->value.integer.value[0]) {
 	case 1:
+	default:
 		mi2s_rx_sample_rate = SAMPLING_RATE_96KHZ;
 		break;
 	case 2:
 		mi2s_rx_sample_rate = SAMPLING_RATE_192KHZ;
 		break;
 	case 0:
-	default:
 		mi2s_rx_sample_rate = SAMPLING_RATE_48KHZ;
 		break;
 	}
@@ -1700,7 +1691,7 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 		return NULL;
 
 #define S(X, Y) ((WCD_MBHC_CAL_PLUG_TYPE_PTR(msm8952_wcd_cal)->X) = (Y))
-	S(v_hs_max, 1500);
+	S(v_hs_max, 1600);
 #undef S
 #define S(X, Y) ((WCD_MBHC_CAL_BTN_DET_PTR(msm8952_wcd_cal)->X) = (Y))
 	S(num_btn, WCD_MBHC_DEF_BUTTONS);
@@ -1723,16 +1714,16 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 	 * 210-290 == Button 2
 	 * 360-680 == Button 3
 	 */
-	btn_low[0] = 75;
+	btn_low[0] = 25;
 	btn_high[0] = 75;
-	btn_low[1] = 150;
-	btn_high[1] = 150;
-	btn_low[2] = 225;
-	btn_high[2] = 225;
-	btn_low[3] = 450;
-	btn_high[3] = 450;
-	btn_low[4] = 500;
-	btn_high[4] = 500;
+	btn_low[1] = 200;
+	btn_high[1] = 225;
+	btn_low[2] = 325;
+	btn_high[2] = 450;
+	btn_low[3] = 500;
+	btn_high[3] = 510;
+	btn_low[4] = 530;
+	btn_high[4] = 540;
 
 	return msm8952_wcd_cal;
 }
@@ -3236,6 +3227,7 @@ parse_mclk_freq:
 		"%s: error! headset_gpio is :%d\n", __func__, headset_gpio);
 	} 
 	pr_err("%s: [hjf] request headset_gpio is %d!\n", __func__, headset_gpio);
+	
 #endif
 
 	/*reading the gpio configurations from dtsi file*/

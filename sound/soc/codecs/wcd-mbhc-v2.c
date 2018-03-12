@@ -42,14 +42,14 @@
 #define OCP_ATTEMPT 1
 #define HS_DETECT_PLUG_TIME_MS (3 * 1000)
 #define SPECIAL_HS_DETECT_TIME_MS (2 * 1000)
-#define MBHC_BUTTON_PRESS_THRESHOLD_MIN 250
+#define MBHC_BUTTON_PRESS_THRESHOLD_MIN 750
 #define GND_MIC_SWAP_THRESHOLD 4
 #define WCD_FAKE_REMOVAL_MIN_PERIOD_MS 100
 #define HS_VREF_MIN_VAL 1400
 #define FW_READ_ATTEMPTS 15
 #define FW_READ_TIMEOUT 4000000
 #define FAKE_REM_RETRY_ATTEMPTS 3
-#define MAX_IMPED 60000
+#define MAX_IMPED 100000
 
 #define WCD_MBHC_BTN_PRESS_COMPL_TIMEOUT_MS  50
 #define ANC_DETECT_RETRY_CNT 7
@@ -596,7 +596,7 @@ static void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 
 		mbhc->hph_type = WCD_MBHC_HPH_NONE;
 		mbhc->zl = mbhc->zr = 0;
-		pr_debug("%s: Reporting removal %d(%x)\n", __func__,
+		pr_info("%s: Reporting removal %d(%x)\n", __func__,
 			 jack_type, mbhc->hph_status);
 		wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
 				mbhc->hph_status, WCD_MBHC_JACK_MASK);
@@ -1373,7 +1373,6 @@ correct_plug_type:
 				      MBHC_PLUG_TYPE_HEADSET) &&
 				     (mbhc->current_plug !=
 				      MBHC_PLUG_TYPE_ANC_HEADPHONE)) &&
-				    !wcd_swch_level_remove(mbhc) &&
 				    !mbhc->btn_press_intr) {
 					pr_debug("%s: cable is %sheadset\n",
 						__func__,
@@ -2131,14 +2130,11 @@ static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HS_L_DET_PULL_UP_COMP_CTRL, 1);
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
 
-	/* Insertion debounce set to 96ms */
-	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_INSREM_DBNC, 6);
+	/* Insertion debounce set to 512ms */
+	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_INSREM_DBNC, 0x0B);
 	/* Button Debounce set to 16ms */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_DBNC, 2);
 
-	/* Enable micbias ramp */
-	if (mbhc->mbhc_cb->mbhc_micb_ramp_control)
-		mbhc->mbhc_cb->mbhc_micb_ramp_control(codec, true);
 	/* enable bias */
 	mbhc->mbhc_cb->mbhc_bias(codec, true);
 	/* enable MBHC clock */
@@ -2376,6 +2372,7 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
 	struct snd_soc_card *card = codec->component.card;
 	const char *hph_switch = "qcom,msm-mbhc-hphl-swh";
 	const char *gnd_switch = "qcom,msm-mbhc-gnd-swh";
+	impedance_det_en = true;
 
 	pr_debug("%s: enter\n", __func__);
 

@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -17,12 +18,15 @@
 #include "camera.h"
 #include "msm_cci.h"
 #include "msm_camera_dt_util.h"
+#include <linux/hardware_info.h>
 
 /* Logging macro */
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
 
 #define SENSOR_MAX_MOUNTANGLE (360)
+char fusionid_back[64] = { 0 };
+char fusionid_front[64] = { 0 };
 
 static struct v4l2_file_operations msm_sensor_v4l2_subdev_fops;
 static int32_t msm_sensor_driver_platform_probe(struct platform_device *pdev);
@@ -105,7 +109,11 @@ static int32_t msm_sensor_driver_create_i2c_v4l_subdev
 	s_ctrl->msm_sd.sd.entity.name =	s_ctrl->msm_sd.sd.name;
 	s_ctrl->sensordata->sensor_info->session_id = session_id;
 	s_ctrl->msm_sd.close_seq = MSM_SD_CLOSE_2ND_CATEGORY | 0x3;
-	msm_sd_register(&s_ctrl->msm_sd);
+	rc = msm_sd_register(&s_ctrl->msm_sd);
+	if (rc < 0) {
+		pr_err("failed: msm_sd_register rc %d", rc);
+		return rc;
+	}
 	msm_sensor_v4l2_subdev_fops = v4l2_subdev_fops;
 #ifdef CONFIG_COMPAT
 	msm_sensor_v4l2_subdev_fops.compat_ioctl32 =
@@ -142,7 +150,11 @@ static int32_t msm_sensor_driver_create_v4l_subdev
 	s_ctrl->msm_sd.sd.entity.group_id = MSM_CAMERA_SUBDEV_SENSOR;
 	s_ctrl->msm_sd.sd.entity.name = s_ctrl->msm_sd.sd.name;
 	s_ctrl->msm_sd.close_seq = MSM_SD_CLOSE_2ND_CATEGORY | 0x3;
-	msm_sd_register(&s_ctrl->msm_sd);
+	rc = msm_sd_register(&s_ctrl->msm_sd);
+	if (rc < 0) {
+		pr_err("failed: msm_sd_register rc %d", rc);
+		return rc;
+	}
 	msm_cam_copy_v4l2_subdev_fops(&msm_sensor_v4l2_subdev_fops);
 #ifdef CONFIG_COMPAT
 	msm_sensor_v4l2_subdev_fops.compat_ioctl32 =
@@ -627,6 +639,27 @@ static void msm_sensor_fill_sensor_info(struct msm_sensor_ctrl_t *s_ctrl,
 	strlcpy(entity_name, s_ctrl->msm_sd.sd.entity.name, MAX_SENSOR_NAME);
 }
 
+extern int main_module_id;
+extern int sub_module_id;
+static const char *module_info[] = {
+	"Unkonw",
+	"Sunny",
+	"Huaquan",
+	"Fushikang",
+	"Guangzhen",
+	"Daling",
+	"Xinli",
+	"O-film",
+	"Boyi",
+	"Sanglaishi",
+	"Qunhui",
+	"Q-Tech",
+	"Unknow",
+	"Unknow",
+	"Unknow",
+	"Unknow",
+};
+
 /* static function definition */
 int32_t msm_sensor_driver_probe(void *setting,
 	struct msm_sensor_info_t *probed_info, char *entity_name)
@@ -716,6 +749,21 @@ int32_t msm_sensor_driver_probe(void *setting,
 			rc = -EFAULT;
 			goto free_slave_info;
 		}
+	}
+
+	if (strlen(slave_info->sensor_name) >= MAX_SENSOR_NAME ||
+		strlen(slave_info->eeprom_name) >= MAX_SENSOR_NAME ||
+		strlen(slave_info->actuator_name) >= MAX_SENSOR_NAME ||
+		strlen(slave_info->ois_name) >= MAX_SENSOR_NAME) {
+		pr_err("failed: name len greater than 32.\n");
+		pr_err("sensor name len:%zu, eeprom name len: %zu.\n",
+			strlen(slave_info->sensor_name),
+			strlen(slave_info->eeprom_name));
+		pr_err("actuator name len: %zu, ois name len:%zu.\n",
+			strlen(slave_info->actuator_name),
+			strlen(slave_info->ois_name));
+		rc = -EINVAL;
+		goto free_slave_info;
 	}
 
 	/* Print slave info */
@@ -894,12 +942,6 @@ CSID_TG:
 	pr_err("%s probe succeeded", slave_info->sensor_name);
 
 	/*
-	  Set probe succeeded flag to 1 so that no other camera shall
-	 * probed on this slot
-	 */
-	s_ctrl->is_probe_succeed = 1;
-
-	/*
 	 * Update the subdevice id of flash-src based on availability in kernel.
 	 */
 	if (strlen(slave_info->flash_name) == 0) {
@@ -951,6 +993,24 @@ CSID_TG:
 
 	msm_sensor_fill_sensor_info(s_ctrl, probed_info, entity_name);
 
+	hardwareinfo_set_prop(probed_info->position == BACK_CAMERA_B
+			? HARDWARE_BACK_CAM:HARDWARE_FRONT_CAM, probed_info->sensor_name);
+	if (main_module_id > 0)  {
+		hardwareinfo_set_prop(HARDWARE_BACK_CAM_MOUDULE_ID, module_info[main_module_id]);
+	} else {
+		hardwareinfo_set_prop(HARDWARE_BACK_CAM_MOUDULE_ID, module_info[0]);
+	}
+	if (sub_module_id > 0)  {
+		hardwareinfo_set_prop(HARDWARE_FRONT_CAM_MOUDULE_ID, module_info[sub_module_id]);
+	} else{
+		hardwareinfo_set_prop(HARDWARE_FRONT_CAM_MOUDULE_ID, module_info[0]);
+	}
+
+	/*
+	 * Set probe succeeded flag to 1 so that no other camera shall
+	 * probed on this slot
+	 */
+	s_ctrl->is_probe_succeed = 1;
 	return rc;
 
 camera_power_down:

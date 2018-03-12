@@ -2,6 +2,7 @@
 # Makefile for misc devices that really don't fit anywhere else.
 #
 
+obj-y += hardware_info.o
 obj-$(CONFIG_IBM_ASM)		+= ibmasm/
 obj-$(CONFIG_AD525X_DPOT)	+= ad525x_dpot.o
 obj-$(CONFIG_AD525X_DPOT_I2C)	+= ad525x_dpot-i2c.o
@@ -74,4 +75,4 @@ obj-$(CONFIG_APDS9930)		+= apds993x.o
 obj-$(CONFIG_UID_SYS_STATS) += uid_sys_stats.o
 obj-$(CONFIG_MEMORY_STATE_TIME) += memory_state_time.o
 obj-$(CONFIG_AW87319)		+= aw87319.o
-obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o
+#obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o

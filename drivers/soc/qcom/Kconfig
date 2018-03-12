@@ -836,6 +836,14 @@ config MSM_KERNEL_PROTECT
           without write permissions.  This protects against malicious
           devices rewriting kernel code.
 
+config ASMP
+ 	bool "Multi-core automatic hotplug support"
+ 	depends on SMP
+ 	default n
+ 	help
+ 	Automatically hotplugs the multiple cpu cores on and off
+ 	based on cpu load and suspend stat
+
           Note that this will BREAK any runtime patching of the kernel text
           (i.e. anything that uses apply_alternatives,
           aarch64_insn_patch_text_nosync, etc. including the various CPU
@@ -877,6 +885,22 @@ config MSM_REMOTEQDSS
 	  events. Provide a sysfs interface for debug tools to dynamically
 	  enable/disable these events. Interface located in
 	  /sys/class/remoteqdss.
+
+config SERIAL_NUM
+	bool "Enable Serial Number Proc Interface"
+	help
+	  Provide a interface for reading CPU serial number
+
+config SECBOOT_FUSE
+	bool "Enable Secure boot fuse Proc Interface"
+	help
+	  rovide a interface for reading CPU secure boot fuse setting. Interface located in
+	  proc/secboot_fuse_reg
+
+config CPUMAXFREQ
+	bool "Enable CPUMAXFREQ Proc Interface"
+	help
+	  Provide a interface for getting the maximum frequency supported by cpu core
 
 config QCOM_SMCINVOKE
 	bool "Secure QSEE Support"

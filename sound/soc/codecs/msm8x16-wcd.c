@@ -46,7 +46,7 @@
 #include "msm8x16_wcd_registers.h"
 
 #define MSM8X16_WCD_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
-			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000)
+			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000)
 #define MSM8X16_WCD_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
 		SNDRV_PCM_FMTBIT_S24_LE |\
 		SNDRV_PCM_FMTBIT_S24_3LE)
@@ -98,17 +98,17 @@ enum {
 #define SPK_PMD 2
 #define SPK_PMU 3
 
-#define MICBIAS_DEFAULT_VAL 1800000
+#define MICBIAS_DEFAULT_VAL 2400000
 #define MICBIAS_MIN_VAL 1600000
 #define MICBIAS_STEP_SIZE 50000
 
-#define DEFAULT_BOOST_VOLTAGE 5000
-#define MIN_BOOST_VOLTAGE 4000
-#define MAX_BOOST_VOLTAGE 5550
+#define DEFAULT_BOOST_VOLTAGE 5600
+#define MIN_BOOST_VOLTAGE 4800
+#define MAX_BOOST_VOLTAGE 6200
 #define BOOST_VOLTAGE_STEP 50
 
-#define MSM8X16_WCD_MBHC_BTN_COARSE_ADJ  100 /* in mV */
-#define MSM8X16_WCD_MBHC_BTN_FINE_ADJ 12 /* in mV */
+#define MSM8X16_WCD_MBHC_BTN_COARSE_ADJ  40 /* in mV */
+#define MSM8X16_WCD_MBHC_BTN_FINE_ADJ 5 /* in mV */
 
 #define VOLTAGE_CONVERTER(value, min_value, step_size)\
 	((value - min_value)/step_size)
@@ -1011,7 +1011,7 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 
 static const uint32_t wcd_imped_val[] = {4, 8, 12, 13, 16,
 					20, 24, 28, 32,
-					36, 40, 44, 48};
+					36, 40, 44, 48, 56, 64, 72, 88, 96, 100};
 
 void msm8x16_notifier_call(struct snd_soc_codec *codec,
 				  const enum wcd_notify_event event)
@@ -2609,7 +2609,7 @@ static const struct snd_kcontrol_new msm8x16_wcd_snd_controls[] = {
 					8, 0, analog_gain),
 	SOC_SINGLE_TLV("ADC3 Volume", MSM8X16_WCD_A_ANALOG_TX_3_EN, 3,
 					8, 0, analog_gain),
-
+#ifndef CONFIG_SOUND_CONTROL
 	SOC_SINGLE_SX_TLV("RX1 Digital Volume",
 			  MSM8X16_WCD_A_CDC_RX1_VOL_CTL_B2_CTL,
 			0,  -84, 40, digital_gain),
@@ -2619,7 +2619,7 @@ static const struct snd_kcontrol_new msm8x16_wcd_snd_controls[] = {
 	SOC_SINGLE_SX_TLV("RX3 Digital Volume",
 			  MSM8X16_WCD_A_CDC_RX3_VOL_CTL_B2_CTL,
 			0,  -84, 40, digital_gain),
-
+#endif
 	SOC_SINGLE_SX_TLV("DEC1 Volume",
 			  MSM8X16_WCD_A_CDC_TX1_VOL_CTL_GAIN,
 			0,  -84, 40, digital_gain),
@@ -4558,7 +4558,9 @@ static const struct snd_soc_dapm_route audio_map[] = {
 	{"IIR1", NULL, "IIR1 INP1 MUX"},
 	{"IIR1 INP1 MUX", "DEC1", "DEC1 MUX"},
 	{"IIR1 INP1 MUX", "DEC2", "DEC2 MUX"},
+	{"IIR1 INP1 MUX", "RX1", "I2S RX1"},
 	{"IIR2", NULL, "IIR2 INP1 MUX"},
+	{"IIR2 INP1 MUX", "RX2", "I2S RX2"},
 	{"IIR2 INP1 MUX", "DEC1", "DEC1 MUX"},
 	{"IIR2 INP1 MUX", "DEC2", "DEC2 MUX"},
 	{"MIC BIAS Internal1", NULL, "INT_LDO_H"},
@@ -4870,7 +4872,7 @@ static struct snd_soc_dai_driver msm8x16_wcd_i2s_dai[] = {
 			.stream_name = "VIfeed",
 			.rates = MSM8X16_WCD_RATES,
 			.formats = MSM8X16_WCD_FORMATS,
-			.rate_max = 48000,
+			.rate_max = 96000,
 			.rate_min = 48000,
 			.channels_min = 2,
 			.channels_max = 2,
@@ -5745,14 +5747,97 @@ static void msm8x16_wcd_configure_cap(struct snd_soc_codec *codec,
 	}
 }
 
+#ifdef CONFIG_SOUND_CONTROL
+
+static struct snd_soc_codec *sound_control_codec_ptr;
+
+static ssize_t headphone_gain_store(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf, size_t count)
+{
+
+	int input_l = 2, input_r = 2;
+
+	sscanf(buf, "%d %d", &input_l, &input_r);
+
+	if (input_l < -84 || input_l > 20)
+		input_l = 2;
+
+	if (input_r < -84 || input_r > 20)
+		input_r = 2;
+
+	snd_soc_write(sound_control_codec_ptr, MSM8X16_WCD_A_CDC_RX1_VOL_CTL_B2_CTL, input_l);
+	snd_soc_write(sound_control_codec_ptr, MSM8X16_WCD_A_CDC_RX2_VOL_CTL_B2_CTL, input_r);
+
+	return count;
+}
+
+static ssize_t headphone_gain_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d %d\n",
+		snd_soc_read(sound_control_codec_ptr, MSM8X16_WCD_A_CDC_RX1_VOL_CTL_B2_CTL),
+		snd_soc_read(sound_control_codec_ptr, MSM8X16_WCD_A_CDC_RX2_VOL_CTL_B2_CTL)
+	);
+}
+
+static struct kobj_attribute headphone_gain_attribute =
+	__ATTR(headphone_gain, 0664,
+		headphone_gain_show,
+		headphone_gain_store);
+
+static ssize_t mic_gain_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+		snd_soc_read(sound_control_codec_ptr, MSM8X16_WCD_A_CDC_TX1_VOL_CTL_GAIN));
+}
+
+static ssize_t mic_gain_store(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int input;
+
+	sscanf(buf, "%d", &input);
+
+	if (input < -10 || input > 20)
+		input = 0;
+
+	snd_soc_write(sound_control_codec_ptr, MSM8X16_WCD_A_CDC_TX1_VOL_CTL_GAIN, input);
+
+	return count;
+}
+
+static struct kobj_attribute mic_gain_attribute =
+	__ATTR(mic_gain, 0664,
+		mic_gain_show,
+		mic_gain_store);
+
+static struct attribute *sound_control_attrs[] = {
+		&headphone_gain_attribute.attr,
+		&mic_gain_attribute.attr,
+		NULL,
+};
+
+static struct attribute_group sound_control_attr_group = {
+		.attrs = sound_control_attrs,
+};
+
+static struct kobject *sound_control_kobj;
+#endif
+
 static int msm8x16_wcd_codec_probe(struct snd_soc_codec *codec)
 {
 	struct msm8x16_wcd_priv *msm8x16_wcd_priv;
 	struct msm8x16_wcd *msm8x16_wcd;
 	struct msm8x16_wcd_pdata *pdata;
 	int i, ret;
+	const char *subsys_name = NULL;
 
 	dev_dbg(codec->dev, "%s()\n", __func__);
+
+#ifdef CONFIG_SOUND_CONTROL
+	sound_control_codec_ptr = codec;
+#endif
 
 	msm8x16_wcd_priv = kzalloc(sizeof(struct msm8x16_wcd_priv), GFP_KERNEL);
 	if (!msm8x16_wcd_priv)
@@ -5880,9 +5965,19 @@ static int msm8x16_wcd_codec_probe(struct snd_soc_codec *codec)
 	/* Set initial cap mode */
 	msm8x16_wcd_configure_cap(codec, false, false);
 	registered_codec = codec;
-	adsp_state_notifier =
-	    subsys_notif_register_notifier("adsp",
-					   &adsp_state_notifier_block);
+	ret = of_property_read_string(codec->dev->of_node,
+				"qcom,subsys-name",
+				&subsys_name);
+	if (ret) {
+		dev_dbg(codec->dev, "missing subsys-name entry in dt node\n");
+		adsp_state_notifier =
+			subsys_notif_register_notifier("adsp",
+			&adsp_state_notifier_block);
+	} else {
+		adsp_state_notifier =
+			subsys_notif_register_notifier(subsys_name,
+			&adsp_state_notifier_block);
+	}
 	if (!adsp_state_notifier) {
 		dev_err(codec->dev, "Failed to register adsp state notifier\n");
 		iounmap(msm8x16_wcd->dig_base);
@@ -6271,6 +6366,19 @@ static int msm8x16_wcd_spmi_probe(struct spmi_device *spmi)
 	}
 	dev_set_drvdata(&spmi->dev, msm8x16);
 	spmi_dev_registered_cnt++;
+
+#ifdef CONFIG_SOUND_CONTROL
+	sound_control_kobj = kobject_create_and_add("sound_control", kernel_kobj);
+	if (sound_control_kobj == NULL) {
+		pr_warn("%s kobject create failed!\n", __func__);
+        }
+
+	ret = sysfs_create_group(sound_control_kobj, &sound_control_attr_group);
+        if (ret) {
+		pr_warn("%s sysfs file create failed!\n", __func__);
+	}
+#endif
+
 register_codec:
 	if ((spmi_dev_registered_cnt == MAX_MSM8X16_WCD_DEVICE) && (!ret)) {
 		if (msm8x16_wcd_modules[0].spmi) {

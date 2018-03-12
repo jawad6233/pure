@@ -1907,8 +1907,8 @@ int write_one_page(struct page *page, int wait);
 void task_dirty_inc(struct task_struct *tsk);
 
 /* readahead.c */
-#define VM_MAX_READAHEAD	512	/* kbytes */
-#define VM_MIN_READAHEAD	16	/* kbytes (includes current page) */
+#define VM_MAX_READAHEAD	1024	/* kbytes */
+#define VM_MIN_READAHEAD	32	/* kbytes (includes current page) */
 
 int force_page_cache_readahead(struct address_space *mapping, struct file *filp,
 			pgoff_t offset, unsigned long nr_to_read);
@@ -2109,6 +2109,10 @@ void drop_pagecache_sb(struct super_block *sb, void *unused);
 unsigned long shrink_slab(struct shrink_control *shrink,
 			  unsigned long nr_pages_scanned,
 			  unsigned long lru_pages);
+
+#ifdef CONFIG_DROP_PAGE_CACHE_SUSPEND
+void drop_pagecache(void);
+#endif
 
 #ifndef CONFIG_MMU
 #define randomize_va_space 0
