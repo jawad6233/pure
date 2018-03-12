@@ -12,6 +12,9 @@ obj-$(CONFIG_CPU_FREQ_GOV_ONDEMAND)	+= cpufreq_ondemand.o
 obj-$(CONFIG_CPU_FREQ_GOV_CONSERVATIVE)	+= cpufreq_conservative.o
 obj-$(CONFIG_CPU_FREQ_GOV_INTERACTIVE)	+= cpufreq_interactive.o
 obj-$(CONFIG_CPU_FREQ_GOV_CHILL)	+= cpufreq_chill.o
+obj-$(CONFIG_CPU_FREQ_GOV_DANCEDANCE)   	+= cpufreq_dancedance.o
+obj-$(CONFIG_CPU_FREQ_GOV_ELECTRODEMAND)	+= cpufreq_electrodemand.o
+obj-$(CONFIG_CPU_FREQ_GOV_ONDEMAND_X)		+= cpufreq_ondemand_x.o
 obj-$(CONFIG_CPU_FREQ_GOV_RELAXED)	+= cpufreq_relaxed.o
 obj-$(CONFIG_CPU_FREQ_GOV_INTERACTIVE)	+= cpufreq_interactive.o
 obj-$(CONFIG_CPU_FREQ_GOV_CULTIVATION)	+= cpufreq_cultivation.o
@@ -30,7 +33,6 @@ obj-$(CONFIG_CPU_FREQ_GOV_NEBULA)	+= cpufreq_nebula.o
 obj-$(CONFIG_CPU_FREQ_GOV_SMARTMAX)	+= cpufreq_smartmax.o
 obj-$(CONFIG_CPU_FREQ_GOV_ELECTRON)	+= cpufreq_electron.o
 obj-$(CONFIG_CPUFREQ_DT)		+= cpufreq-dt.o
-
 ##################################################################################
 # x86 drivers.
 # Link order matters. K8 is preferred to ACPI because of firmware bugs in early

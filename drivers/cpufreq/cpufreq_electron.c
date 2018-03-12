@@ -465,9 +465,6 @@ static void cpufreq_electron_timer(unsigned long data)
 				SCREEN_OFF_TIMER_RATE);
 	}
 
-	if (tunables->use_sched_load)
-		sched_get_cpus_busy(ppol->cpu_busy_times,
-				    ppol->policy->related_cpus);
 	max_cpu = cpumask_first(ppol->policy->cpus);
 	for_each_cpu(i, ppol->policy->cpus) {
 		pcpu = &per_cpu(cpuinfo, i);
