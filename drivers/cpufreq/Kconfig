@@ -123,14 +123,7 @@ config CPU_FREQ_DEFAULT_GOV_CONSERVATIVEX
 	select CPU_FREQ_GOV_CONSERVATIVEX
 	help
 	  Use the CPUFreq governor 'conservativex' as default.
-config CPU_FREQ_DEFAULT_GOV_ZZMOOVE
- 	  bool "zzmoove"
- 	  select CPU_FREQ_GOV_ZZMOOVE
- 	  select CPU_FREQ_GOV_PERFORMANCE
- 	  help
- 	  Use the CPUFreq governor 'zzmoove' as default, using predefined
- 	  frequency lookup tables and optimized scaling triggers instead of
- 	  % frequency steps to get smooth up/downscaling dependant on CPU load.
+
 config CPU_FREQ_DEFAULT_GOV_CHILL
 	bool "chill"
 	select CPU_FREQ_GOV_CHILL
@@ -171,20 +164,18 @@ config CPU_FREQ_DEFAULT_GOV_NEBULA
 	  you to get a full dynamic cpu frequency capable system by simply
 	  loading your cpufreq low-level hardware driver, using the
 	  'nebula' governor for latency-sensitive workloads.
+
+config CPU_FREQ_DEFAULT_GOV_BIOSHOCK
+	bool "BioShock"
+	select CPU_FREQ_GOV_BIOSHOCK
+	help
+	  Default governor of BioShock kernel
 config CPU_FREQ_DEFAULT_GOV_DANCEDANCE
             bool "dancedance"
             select CPU_FREQ_GOV_DANCEDANCE
             help
               Use the CPUFreq governor 'dancedance' as default.
-config CPU_FREQ_DEFAULT_GOV_ELECTRODEMAND
-	bool "electrodemand"
-	select CPU_FREQ_GOV_ELECTRODEMAND
-        select CPU_FREQ_GOV_PERFORMANCE
-	help
-	  Use the CPUFreq governor 'electrodemand' as default. This allows
-	  you to get a full dynamic cpu frequency capable system by simply
-	  loading your cpufreq low-level hardware driver, using the
-	  'electrodemand' governor for latency-sensitive workloads.
+
 config CPU_FREQ_DEFAULT_GOV_BLU_ACTIVE
 	bool "blu_active"
 	select CPU_FREQ_GOV_BLU_ACTIVE
@@ -203,17 +194,6 @@ config CPU_FREQ_DEFAULT_GOV_ELEMENTALX
 	  Use the CPUFreq governor 'elementalx' as default.
 config CPU_FREQ_DEFAULT_GOV_SCHED
 	bool "sched"
-config CPU_FREQ_DEFAULT_GOV_ONDEMAND_X
-	bool "ondemand_x"
-	select CPU_FREQ_GOV_ONDEMAND_X
-	select CPU_FREQ_GOV_PERFORMANCE
-	help
-	  Use the CPUFreq governor 'ondemand_x' as default. This allows
-	  you to get a full dynamic frequency capable system by simply
-	  loading your cpufreq low-level hardware driver.
-	  Be aware that not all cpufreq drivers support the ondemand_x
-	  governor. If unsure have a look at the help section of the
-	  driver. Fallback governor will be the performance governor.
 	select CPU_FREQ_GOV_INTERACTIVE
 	help
 	  Use the CPUfreq governor 'sched' as default. This scales
@@ -308,14 +288,6 @@ config CPU_FREQ_GOV_ONDEMAND
 	  For details, take a look at linux/Documentation/cpu-freq.
 
 	  If in doubt, say N.
-config CPU_FREQ_GOV_ZZMOOVE
- 	tristate "'zzmoove' cpufreq governor"
- 	depends on CPU_FREQ
- 	help
- 	  'zzmoove' - based on cpufreq_conservative, using predefined
- 	  frequency lookup tables and optimized scaling triggers instead of
- 	  % frequency steps to get smooth up/downscaling dependant on CPU load.
- 	  If in doubt, say N.
 
 config CPU_FREQ_GOV_LIONHEART
            tristate "'lionheart' cpufreq governor"
@@ -417,6 +389,17 @@ config CPU_FREQ_GOV_ALUCARD
 	tristate "'alucard' cpufreq governor"
 	depends on CPU_FREQ
 	select CPU_FREQ_GOV_COMMON
+config CPU_FREQ_GOV_BIOSHOCK
+	tristate "'bioshock' cpufreq bioshock"
+	depends on CPU_FREQ
+	help
+	  'bioshock' - More aggressive version of conservative
+config CPU_FREQ_GOV_DANCEDANCE
+           tristate "'dancedance' cpufreq governor"
+           depends on CPU_FREQ
+           help
+             dancedance' - a "smart" optimized governor!
+             If in doubt, say N.
 config CPU_FREQ_GOV_ELEMENTALX
 	tristate "'elementalx' cpufreq policy governor"
 	select CPU_FREQ_TABLE
@@ -458,39 +441,6 @@ config CPU_FREQ_GOV_SCHED
 	bool "'sched' cpufreq governor"
 	depends on CPU_FREQ
 	depends on SMP
-config CPU_FREQ_GOV_DANCEDANCE
-           tristate "'dancedance' cpufreq governor"
-           depends on CPU_FREQ
-           help
-             dancedance' - a "smart" optimized governor!
-             If in doubt, say N.
-
-config CPU_FREQ_GOV_ELECTRODEMAND
-	tristate "'electrodemand' cpufreq policy governor"
-        depends on CPU_FREQ
-	help
-	  'electrodemand' - A tweaked "ondemand" based smart and smooth optimized
-           governor designed for optimization in transition and a balance between
-           performance and power.
-	
-	   If in doubt, say N.
-config CPU_FREQ_GOV_ONDEMAND_X
-	tristate "'ondemand_x' cpufreq policy governor"
-	select CPU_FREQ_TABLE
-	help
-	  'ondemand_x' - This driver adds a dynamic cpufreq policy governor.
-	  The governor does a periodic polling and 
-	  changes frequency based on the CPU utilization.
-	  The support for this governor depends on CPU capability to
-	  do fast frequency switching (i.e, very low latency frequency
-	  transitions). 
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called cpufreq_ondemand_x.
-
-	  For details, take a look at linux/Documentation/cpu-freq.
-
-	  If in doubt, say N.
 	select CPU_FREQ_GOV_COMMON
 	help
 	  'sched' - this governor scales cpu frequency from the
