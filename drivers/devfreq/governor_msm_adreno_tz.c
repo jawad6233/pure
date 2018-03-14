@@ -61,7 +61,7 @@ static DEFINE_SPINLOCK(suspend_lock);
 #define TAG "msm_adreno_tz: "
 
 #if 1
-static unsigned int adrenoboost = 0;
+static unsigned int adrenoboost = 1;
 #endif
 
 static u64 suspend_time;
@@ -458,6 +458,13 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 	}
 
 	*freq = stats.current_frequency;
+
+#ifdef CONFIG_ADRENO_IDLER
+	if (adreno_idler(stats, devfreq, freq)) {
+		/* adreno_idler has asked to bail out now */
+		return 0;
+	}
+#endif
 	
 	/*
 	 * Force to use & record as min freq when system has
@@ -468,14 +475,6 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 		return 0;
 	}
 	
-
-#ifdef CONFIG_ADRENO_IDLER
-	if (adreno_idler(stats, devfreq, freq)) {
-		/* adreno_idler has asked to bail out now */
-		return 0;
-	}
-#endif
-
 	priv->bin.total_time += stats.total_time;
 #if 1
 	// scale busy time up based on adrenoboost parameter, only if MIN_BUSY exceeded...
@@ -518,6 +517,10 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 		pr_err(TAG "bad freq %ld\n", stats.current_frequency);
 		return level;
 	}
+	// idle freq or any non governor drop should move last_level as well, so adrenoboost works on proper leveling
+	if (level != priv->bin.last_level) {
+		priv->bin.last_level = level;
+	}
 
 	/*
 	 * If there is an extended block of busy processing,
@@ -545,6 +548,10 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 		scm_data[3] = context_count;
 		__secure_tz_update_entry3(scm_data, sizeof(scm_data),
 					&val, sizeof(val), priv);
+		if ((val == 0) &&
+			(level >= (devfreq->profile->max_state - 2)) &&
+			((priv->bin.busy_time * 100 / priv->bin.total_time) < 98))
+			val = 1;
 #endif
 	}
 #if 0
@@ -725,7 +732,6 @@ static int tz_handler(struct devfreq *devfreq, unsigned int event, void *data)
 					(devfreq->profile),
 					struct msm_adreno_extended_profile,
 					profile);
-	BUG_ON(devfreq == NULL);
 
 	if (!tz_devfreq_g)
 		tz_devfreq_g = devfreq;
