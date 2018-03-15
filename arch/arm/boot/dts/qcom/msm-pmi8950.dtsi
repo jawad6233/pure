@@ -201,7 +201,7 @@
 			compatible = "qcom,qpnp-smbcharger";
 			#address-cells = <1>;
 			#size-cells = <1>;
-
+			qcom,max-pulse-allowed = <12>;
 			qcom,iterm-ma = <100>;
 			qcom,float-voltage-mv = <4200>;
 			qcom,resume-delta-mv = <200>;
@@ -209,13 +209,13 @@
 			qcom,rparasitic-uohm = <100000>;
 			qcom,bms-psy-name = "bms";
 			qcom,thermal-mitigation = <2800 2300 1800 1300 0>;
-			qcom,parallel-usb-min-current-ma = <2000>;
+			qcom,parallel-usb-min-current-ma = <1400>;
 			qcom,parallel-usb-9v-min-current-ma = <900>;
 			qcom,parallel-allowed-lowering-ma = <500>;
 			qcom,pmic-revid = <&pmi8950_revid>;
 			qcom,force-aicl-rerun;
 			qcom,aicl-rerun-period-s = <180>;
-			//qcom,autoadjust-vfloat;
+			
 			qcom,vchg_sns-vadc = <0xf8>;
 			qcom,vchg-adc-channel-id = <0x3>;
 
@@ -601,13 +601,13 @@
 						"torch1_trigger";
 				qcom,max-current = <200>;
 				qcom,id = <1>;
-				qcom,current = <100>;
+				qcom,current = <120>;
 			};
 
 			pmi8950_torch2: qcom,torch_2 {
 				label = "torch";
 				qcom,led-name = "flashlight";
-				qcom,default-led-trigger =
+				qcom,default-led-trigger = 
 						"torch2_trigger";
 				qcom,max-current = <200>;
 				qcom,id = <1>;
@@ -645,6 +645,7 @@
 			qcom,ilim-ma = <800>;
 			qcom,sc-deb-cycles = <8>;
 			qcom,int-pwm-freq-khz = <505>;
+			//qcom,en-brake;
 			qcom,brake-pattern = [03 03 00 00];
 			qcom,use-play-irq;
 			qcom,use-sc-irq;

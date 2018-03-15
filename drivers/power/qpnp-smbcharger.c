@@ -40,6 +40,9 @@
 #include <linux/msm_bcl.h>
 #include <linux/ktime.h>
 #include <linux/pmic-voter.h>
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
 
 /* Mask/Bit helpers */
 #define _SMB_MASK(BITS, POS) \
@@ -445,13 +448,13 @@ module_param_named(
 	parallel_en, smbchg_parallel_en, int, S_IRUSR | S_IWUSR
 );
 
-static int smbchg_main_chg_fcc_percent = 82;
+static int smbchg_main_chg_fcc_percent = 80;
 module_param_named(
 	main_chg_fcc_percent, smbchg_main_chg_fcc_percent,
 	int, S_IRUSR | S_IWUSR
 );
 
-static int smbchg_main_chg_icl_percent = 75;
+static int smbchg_main_chg_icl_percent = 20;
 module_param_named(
 	main_chg_icl_percent, smbchg_main_chg_icl_percent,
 	int, S_IRUSR | S_IWUSR
@@ -475,7 +478,7 @@ module_param_named(
 	int, S_IRUSR | S_IWUSR
 );
 
-static int wipower_dyn_icl_en = 1;
+static int wipower_dyn_icl_en;
 module_param_named(
 	dynamic_icl_wipower_en, wipower_dyn_icl_en,
 	int, S_IRUSR | S_IWUSR
@@ -1824,7 +1827,12 @@ static int smbchg_set_usb_current_max(struct smbchg_chip *chip,
 			}
 			chip->usb_max_current_ma = 500;
 		}
+#ifdef CONFIG_FORCE_FAST_CHARGE
+		if ((force_fast_charge > 0) &&
+			(current_ma == CURRENT_500_MA || current_ma == CURRENT_900_MA)) {
+#else
 		if (current_ma == CURRENT_900_MA) {
+#endif
 			rc = smbchg_sec_masked_write(chip,
 					chip->usb_chgpth_base + CHGPTH_CFG,
 					CFG_USB_2_3_SEL_BIT, CFG_USB_3);
@@ -4787,7 +4795,7 @@ static void handle_usb_removal(struct smbchg_chip *chip)
 		chip->typec_current_ma = 0;
 	/* cancel/wait for hvdcp pending work if any */
 	cancel_delayed_work_sync(&chip->hvdcp_det_work);
-	smbchg_change_usb_supply_type(chip, POWER_SUPPLY_TYPE_UNKNOWN);
+	smbchg_change_usb_supply_type(chip, POWER_SUPPLY_TYPE_USB);
 	if (!chip->skip_usb_notification) {
 		pr_smb(PR_MISC, "setting usb psy present = %d\n",
 				chip->usb_present);
@@ -5893,6 +5901,7 @@ static int smbchg_battery_set_property(struct power_supply *psy,
 		rc = vote(chip->dc_suspend_votable, USER_EN_VOTER,
 				!val->intval, 0);
 		chip->chg_enabled = val->intval;
+		power_supply_changed(chip->usb_psy);
 		schedule_work(&chip->usb_set_online_work);
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
