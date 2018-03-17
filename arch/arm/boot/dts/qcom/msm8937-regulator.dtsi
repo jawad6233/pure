@@ -358,7 +358,7 @@
 		interrupts = <0 15 0>;
 		regulator-name = "apc_corner";
 		regulator-min-microvolt = <1>;
-		regulator-max-microvolt = <14>;
+		regulator-max-microvolt = <15>;
 
 		qcom,cpr-fuse-corners = <3>;
 		qcom,cpr-voltage-ceiling = <1150000 1200000 1300000>;
@@ -395,7 +395,7 @@
 					<70 54 7 0>;
 		qcom,cpr-fuse-quot-offset-scale = <5 5 5>;
 		qcom,cpr-init-voltage-step = <10000>;
-		qcom,cpr-corner-map = <1 1 1 1 2 2 3 3 3 3 3 3 3 3>;
+		qcom,cpr-corner-map = <1 1 1 1 2 2 3 3 3 3 3 3 3 3 3>;
 		qcom,cpr-corner-frequency-map =
 				<1 307200000>,
 				<2 422400000>,
@@ -410,7 +410,8 @@
 				<11 1536000000>,
 				<12 1651200000>,
 				<13 1728000000>,
-				<14 1766400000>;
+				<14 1766400000>,
+				<15 1804800000>;
 		qcom,speed-bin-fuse-sel = <37 34 3 0>;
 		qcom,cpr-speed-bin-max-corners =
 					<0 0 1 2 9>,
