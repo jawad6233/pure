@@ -7491,7 +7491,7 @@ err:
 }
 
 #define DEFAULT_VLED_MAX_UV		3500000
-#define DEFAULT_FCC_MA			2800
+#define DEFAULT_FCC_MA			3000
 #define INDIA_DEFAULT_FCC_MA	2500
 static int smb_parse_dt(struct smbchg_chip *chip)
 {
