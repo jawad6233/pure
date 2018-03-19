@@ -226,6 +226,11 @@ config CPU_FREQ_DEFAULT_GOV_DARKNESS
 	select CPU_FREQ_GOV_DARKNESS
 	help
 
+config CPU_FREQ_DEFAULT_GOV_DARKNESSV5
+        bool "darknessv5"
+        select CPU_FREQ_GOV_DARKNESSV5
+        help
+
 config CPU_FREQ_DEFAULT_GOV_ALUCARD
 	bool "alucard"
 	select CPU_FREQ_GOV_ALUCARD
@@ -432,6 +437,9 @@ config CPU_FREQ_GOV_IRONACTIVE
 	  For details, take a look at linux/Documentation/cpu-freq.
 
 	  If in doubt, say N.
+config CPU_FREQ_GOV_DARKNESSV5
+	tristate "'darknessv5' cpufreq governor"
+        depends on CPU_FREQ
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"
 	depends on CPU_FREQ
