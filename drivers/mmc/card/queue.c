@@ -18,6 +18,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
+#include <linux/iosched_switcher.h>
 
 #include <linux/mmc/card.h>
 #include <linux/mmc/host.h>
@@ -85,6 +86,11 @@ static inline void mmc_cmdq_ready_wait(struct mmc_host *host,
 {
 	struct mmc_cmdq_context_info *ctx = &host->cmdq_ctx;
 	struct request_queue *q = mq->queue;
+	struct sched_param scheduler_params = {0};
+
+	scheduler_params.sched_priority = 1;
+
+	sched_setscheduler(current, SCHED_FIFO, &scheduler_params);
 
 	/*
 	 * Wait until all of the following conditions are true:
@@ -295,6 +301,7 @@ void mmc_cmdq_setup_queue(struct mmc_queue *mq, struct mmc_card *card)
 		limit = *mmc_dev(host)->dma_mask;
 
 	queue_flag_set_unlocked(QUEUE_FLAG_NONROT, mq->queue);
+	queue_flag_clear_unlocked(QUEUE_FLAG_ADD_RANDOM, mq->queue);
 	if (mmc_can_erase(card))
 		mmc_queue_setup_discard(mq->queue, card);
 
@@ -481,6 +488,8 @@ success:
 		ret = PTR_ERR(mq->thread);
 		goto free_bounce_sg;
 	}
+
+	init_iosched_switcher(mq->queue);
 
 	return 0;
  free_bounce_sg:
