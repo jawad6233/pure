@@ -221,7 +221,10 @@ config CPU_FREQ_DEFAULT_GOV_IMPULSE
 	  you to get a full dynamic cpu frequency capable system by simply
 	  loading your cpufreq low-level hardware driver, using the
 	  'impulse' governor for latency-sensitive workloads.
-
+config CPU_FREQ_DEFAULT_GOV_DESPAIR
+	bool "despair"
+	select CPU_FREQ_GOV_DESPAIR
+	help
 config CPU_FREQ_DEFAULT_GOV_NIGHTMARE
 	bool "nightmare"
 	select CPU_FREQ_GOV_NIGHTMARE
@@ -231,7 +234,10 @@ config CPU_FREQ_DEFAULT_GOV_DARKNESS
 	bool "darkness"
 	select CPU_FREQ_GOV_DARKNESS
 	help
-
+config CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
+	bool "interactivex"
+	select CPU_FREQ_GOV_INTERACTIVEX
+	help
 config CPU_FREQ_DEFAULT_GOV_DARKNESSV5
         bool "darknessv5"
         select CPU_FREQ_GOV_DARKNESSV5
@@ -448,6 +454,12 @@ config CPU_FREQ_GOV_IRONACTIVE
 config CPU_FREQ_GOV_DARKNESSV5
 	tristate "'darknessv5' cpufreq governor"
         depends on CPU_FREQ
+config CPU_FREQ_GOV_DESPAIR
+	tristate "'despair' cpufreq governor"
+	depends on CPU_FREQ
+config CPU_FREQ_GOV_INTERACTIVEX
+	tristate "'interactivex' cpufreq policy governor"
+	default y
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"
 	depends on CPU_FREQ

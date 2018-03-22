@@ -417,28 +417,26 @@
 	qcom,msm-thermal {
 		compatible = "qcom,msm-thermal";
 		qcom,sensor-id = <5>;
-		qcom,poll-ms = <250>;
+		qcom,poll-ms = <100>;
 		qcom,limit-temp = <60>;
 		qcom,temp-hysteresis = <10>;
 		qcom,freq-step = <2>;
-		qcom,core-limit-temp = <80>;
+		qcom,core-limit-temp = <75>;
 		qcom,core-temp-hysteresis = <10>;
-		qcom,hotplug-temp = <105>;
+		qcom,hotplug-temp = <80>;
 		qcom,hotplug-temp-hysteresis = <15>;
-		qcom,freq-mitigation-temp = <105>;
+		qcom,freq-mitigation-temp = <85>;
 		qcom,freq-mitigation-temp-hysteresis = <15>;
 		qcom,freq-mitigation-value = <400000>;
 		qcom,online-hotplug-core;
 		qcom,synchronous-cluster-id = <0 1>;
 		qcom,synchronous-cluster-map = <1 4 &CPU0 &CPU1 &CPU2 &CPU3>,
 						<0 4 &CPU4 &CPU5 &CPU6 &CPU7>;
-		qcom,disable-cx-phase-ctrl;
-		qcom,disable-gfx-phase-ctrl;
-		qcom,disable-vdd-mx;
-		qcom,disable-psm;
-		qcom,disable-ocr;
-		qcom,vdd-restriction-temp = <5>;
-		qcom,vdd-restriction-temp-hysteresis = <10>;
+		//qcom,disable-vdd-mx;
+		//qcom,disable-psm;
+		//qcom,disable-ocr;
+		qcom,vdd-restriction-temp = <62>;
+		qcom,vdd-restriction-temp-hysteresis = <5>;
 		vdd-dig-supply = <&pm8937_s2_floor_level>;
 
 		qcom,vdd-dig-rstr {
@@ -451,7 +449,7 @@
 
 		msm_thermal_freq: qcom,vdd-apps-rstr {
 			qcom,vdd-rstr-reg = "vdd-apps";
-			qcom,levels = <900000>;
+			qcom,levels = <345600 652800 844800>;
 			qcom,freq-req;
 		};
 	};

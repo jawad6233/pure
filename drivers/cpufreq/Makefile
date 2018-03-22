@@ -39,6 +39,8 @@ obj-$(CONFIG_CPU_FREQ_GOV_NEBULA)	+= cpufreq_nebula.o
 obj-$(CONFIG_CPU_FREQ_GOV_SMARTMAX)	+= cpufreq_smartmax.o
 obj-$(CONFIG_CPU_FREQ_GOV_ELECTRON)	+= cpufreq_electron.o
 obj-$(CONFIG_CPUFREQ_DT)		+= cpufreq-dt.o
+obj-$(CONFIG_CPU_FREQ_GOV_INTERACTIVEX)	+= cpufreq_interactivex.o
+obj-$(CONFIG_CPU_FREQ_GOV_DESPAIR)		+= cpufreq_despair.o
 obj-$(CONFIG_CPU_FREQ_GOV_DARKNESSV5)   += cpufreq_darknessv5.o
 ##################################################################################
 # x86 drivers.

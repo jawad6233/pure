@@ -198,4 +198,5 @@ source "drivers/bif/Kconfig"
 
 source "drivers/fingerprint/Kconfig"
 
+source "drivers/cpuquiet/Kconfig"
 endmenu

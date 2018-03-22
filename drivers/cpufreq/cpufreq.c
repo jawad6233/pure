@@ -703,6 +703,9 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 						&new_policy.governor))
 		return -EINVAL;
 
+	new_policy.min = new_policy.user_policy.min;
+	new_policy.max = new_policy.user_policy.max;
+
 	ret = cpufreq_set_policy(policy, &new_policy);
 
 	policy->user_policy.policy = policy->policy;
@@ -1917,6 +1920,21 @@ void *cpufreq_get_driver_data(void)
 	return NULL;
 }
 EXPORT_SYMBOL_GPL(cpufreq_get_driver_data);
+
+/**
+ * cpufreq_notify_utilization - notify CPU userspace about CPU utilization
+ * change
+ *
+ * This function is called everytime the CPU load is evaluated by the
+ * ondemand governor. It notifies userspace of cpu load changes via sysfs.
+ */
+void cpufreq_notify_utilization(struct cpufreq_policy *policy,
+		unsigned int util)
+{
+	if (policy) {
+		policy->util = util;
+	}
+}
 
 /*********************************************************************
  *                     NOTIFIER LISTS INTERFACE                      *
