@@ -592,7 +592,7 @@
 			#size-cells = <0>;
 
 			qcom,speed-bin = <0>;
-			qcom,initial-pwrlevel = <4>;
+			qcom,initial-pwrlevel = <8>;
 
 			/* OVERCLOCK II */
 			qcom,gpu-pwrlevel@0 {
