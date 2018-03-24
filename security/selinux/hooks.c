@@ -413,7 +413,12 @@ static int selinux_is_sblabel_mnt(struct super_block *sb)
 		!strcmp(sb->s_type->name, "pstore") ||
 		!strcmp(sb->s_type->name, "debugfs") ||
 		!strcmp(sb->s_type->name, "tracefs") ||
-		!strcmp(sb->s_type->name, "rootfs");
+		!strcmp(sb->s_type->name, "rootfs") ||
+		!strcmp(sb->s_type->name, "esdfs") ||
+		!strcmp(sb->s_type->name, "f2fs") ||
+		!strcmp(sb->s_type->name, "tmpfs") ||
+		!strcmp(sb->s_type->name, "sdcardfs") ||
+		!strcmp(sb->s_type->name, "sdfat");
 }
 
 static int sb_finish_set_opts(struct super_block *sb)
@@ -4109,6 +4114,8 @@ static int sock_has_perm(struct task_struct *task, struct sock *sk, u32 perms)
 	struct lsm_network_audit net = {0,};
 	u32 tsid = task_sid(task);
 
+	if (!sksec)
+		return -EFAULT;
 	if (sksec->sid == SECINITSID_KERNEL)
 		return 0;
 
@@ -4199,10 +4206,18 @@ static int selinux_socket_bind(struct socket *sock, struct sockaddr *address, in
 		u32 sid, node_perm;
 
 		if (family == PF_INET) {
+			if (addrlen < sizeof(struct sockaddr_in)) {
+				err = -EINVAL;
+				goto out;
+			}
 			addr4 = (struct sockaddr_in *)address;
 			snum = ntohs(addr4->sin_port);
 			addrp = (char *)&addr4->sin_addr.s_addr;
 		} else {
+			if (addrlen < SIN6_LEN_RFC2133) {
+				err = -EINVAL;
+				goto out;
+			}
 			addr6 = (struct sockaddr_in6 *)address;
 			snum = ntohs(addr6->sin6_port);
 			addrp = (char *)&addr6->sin6_addr.s6_addr;
