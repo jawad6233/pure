@@ -46,43 +46,4 @@ extern void cpuquiet_stats_update(unsigned int cpu, bool up,
 int cpuquiet_register_attrs(struct attribute_group *attrs);
 void cpuquiet_unregister_attrs(struct attribute_group *attrs);
 
-#else
-static inline int cpuquiet_sysfs_init(void)
-{
-	return 0;
-}
-
-static inline void cpuquiet_sysfs_exit(void)
-{
-}
-
-static inline int cpuquiet_add_dev(struct device *dev, unsigned int cpu)
-{
-	return 0;
-}
-
-static inline void cpuquiet_remove_dev(unsigned int cpu)
-{
-}
-
-static inline int cpuquiet_stats_init(void)
-{
-	return 0;
-}
-
-static inline void cpuquiet_stats_exit(void)
-{
-}
-
-static inline void cpuquiet_stats_update(unsigned int cpu, bool up,
-		u64 trans_overhead_us)
-{
-}
-static int cpuquiet_register_attrs(struct attribute_group *attrs)
-{
-	return 0;
-}
-static void cpuquiet_unregister_attrs(struct attribute_group *attrs)
-{
-}
 #endif

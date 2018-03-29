@@ -78,9 +78,9 @@ typedef enum {
 #define USERSPACE_RUNNING	0
 #define USERSPACE_LOW_POWER	1
 
-#define CLUSTER_LITTLE		0
-#define CLUSTER_BIG		4
-#define MAX_CLUSTERS		7
+#define CLUSTER_LITTLE		2
+#define CLUSTER_BIG		2
+#define MAX_CLUSTERS		4
 
 struct idle_info {
 	u64 idle_last;
@@ -427,6 +427,7 @@ static CPU_SPEED_BALANCE balanced_speed_balance(void)
 
 	unsigned int avg_nr_run = get_nr_run_avg();
 	unsigned int nr_run;
+	bool done;
 
 	/* First use the up thresholds to see if we need to bring CPUs online. */
 	pr_debug("%s: Current core count max runqueue: %d\n", __func__,
@@ -447,7 +448,7 @@ static CPU_SPEED_BALANCE balanced_speed_balance(void)
 	 * down threshold comparison loop.
 	 */
 	for ( ; nr_run > 1; --nr_run) {
-		if (avg_nr_run >= nr_down_run_thresholds[nr_run - 1]) {
+		if (done || avg_nr_run >= nr_down_run_thresholds[nr_run - 1]) {
 			/* We have fewer things running than our down threshold.
 			   Use one less CPU. */
 			break;
@@ -541,9 +542,9 @@ static void rqbalance_work_func(struct work_struct *work)
 		case USERSPACE_LOW_POWER:
 		{
 			int i;
-			if (num_online_cpus() == 2)
+			if (num_online_cpus() == 1)
 				return;
-			for (i = 2; i < nr_cpu_ids; i++)
+			for (i = 1; i < nr_cpu_ids; i++)
 				cpu_down(cpu);
 			return;
 		}
@@ -557,17 +558,17 @@ static void rqbalance_work_func(struct work_struct *work)
 		if (cpu < nr_cpu_ids)
 			up = false;
 		else
-		stop_load_timer();
+			stop_load_timer();
 
-		queue_delayed_work(rqbalance_wq,
-				   &rqbalance_work, up_delay);
+			queue_delayed_work(rqbalance_wq,
+						 &rqbalance_work, up_delay);
 		break;
 	case UP:
 		balance = balanced_speed_balance();
 		switch (balance) {
 		/* cpu speed is up and balanced - one more on-line */
 		case CPU_UPCORE:
-			cpu = cpumask_next_zero(1, cpu_online_mask);
+			cpu = cpumask_next_zero(0, cpu_online_mask);
 			if (cpu < nr_cpu_ids)
 				up = true;
 			break;
@@ -724,7 +725,7 @@ static ssize_t store_uint_array(struct cpuquiet_attribute *cattr,
 	   the target MAX is set */
 	if (!strncmp(cattr->attr.name, "nr_run_thresholds",
 				strlen(cattr->attr.name)-2)) {
-		int x, max_cpu_id = 1;
+		int x, max_cpu_id = 0;
 
 		for_each_possible_cpu(x)
 			max_cpu_id++;
@@ -753,7 +754,7 @@ static ssize_t show_uint_array(struct cpuquiet_attribute *cattr,
 	return temp - buf;
 }
 
-CPQ_SIMPLE_ATTRIBUTE(balance_level, 0644, uint);
+CPQ_SIMPLE_ATTRIBUTE(balance_level, 0660, uint);
 CPQ_SIMPLE_ATTRIBUTE(load_sample_rate, 0644, uint);
 CPQ_SIMPLE_ATTRIBUTE(userspace_suspend_state, 0644, uint);
 CPQ_CUSTOM_ATTRIBUTE(up_delay, 0644,
@@ -764,9 +765,9 @@ CPQ_CUSTOM_ATTRIBUTE(idle_bottom_freq, 0644,
 			show_uint_array, store_uint_array);
 CPQ_CUSTOM_ATTRIBUTE(idle_top_freq, 0644,
 			show_uint_array, store_uint_array);
-CPQ_CUSTOM_ATTRIBUTE(nr_down_run_thresholds, 0644,
+CPQ_CUSTOM_ATTRIBUTE(nr_down_run_thresholds, 0660,
 			show_uint_array, store_uint_array);
-CPQ_CUSTOM_ATTRIBUTE(nr_run_thresholds, 0644,
+CPQ_CUSTOM_ATTRIBUTE(nr_run_thresholds, 0660,
 			show_uint_array, store_uint_array);
 
 static struct attribute *rqbalance_attrs[] = {
@@ -820,6 +821,7 @@ int rqbalance_pm_notify(struct notifier_block *notify_block,
 	case PM_POST_SUSPEND:
 	case PM_POST_HIBERNATION:
 	case PM_POST_RESTORE:
+		cpuquiet_wake_cpu(1, false);
 		cpuquiet_wake_cpu(2, false);
 		cpuquiet_wake_cpu(3, false);
 		rqbalance_state = UP;
@@ -909,7 +911,7 @@ static void rqbalance_stop(void)
 
 static int rqbalance_start(void)
 {
-	int err, i, max_cpu_id = 1;
+	int err, i, max_cpu_id = 0;
 
 	err = rqbalance_sysfs_init();
 	if (err)

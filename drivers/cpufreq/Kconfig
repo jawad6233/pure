@@ -144,7 +144,16 @@ config CPU_FREQ_DEFAULT_GOV_CONSERVATIVEX
 	select CPU_FREQ_GOV_CONSERVATIVEX
 	help
 	  Use the CPUFreq governor 'conservativex' as default.
-
+config CPU_FREQ_DEFAULT_GOV_CLARITY
+	bool "clarity"
+	select CPU_FREQ_GOV_CLARITY
+	help
+	  Use the CPUFreq governor 'clarity' as default. This allows
+	  you to get a full dynamic frequency capable system by simply
+	  loading your cpufreq low-level hardware driver.
+	  Be aware that not all cpufreq drivers support the clarity
+	  governor. If unsure have a look at the help section of the
+	  driver. Fallback governor will be the performance governor.
 config CPU_FREQ_DEFAULT_GOV_CHILL
 	bool "chill"
 	select CPU_FREQ_GOV_CHILL
@@ -215,6 +224,11 @@ config CPU_FREQ_DEFAULT_GOV_ELEMENTALX
 	  Use the CPUFreq governor 'elementalx' as default.
 config CPU_FREQ_DEFAULT_GOV_SCHED
 	bool "sched"
+config CPU_FREQ_DEFAULT_GOV_PEGASUSQ
+	bool "pegasusq"
+	select CPU_FREQ_GOV_PEGASUSQ
+	help
+	  Use the CPUFreq governor 'pegasusq' as default.
 	select CPU_FREQ_GOV_INTERACTIVE
 	help
 	  Use the CPUfreq governor 'sched' as default. This scales
@@ -477,6 +491,8 @@ config CPU_FREQ_GOV_DESPAIR
 config CPU_FREQ_GOV_INTERACTIVEX
 	tristate "'interactivex' cpufreq policy governor"
 	default y
+config CPU_FREQ_GOV_PEGASUSQ
+	tristate "'pegasusq' cpufreq policy governor"
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"
 	depends on CPU_FREQ
@@ -498,6 +514,19 @@ config CPU_FREQ_GOV_CONSERVATIVE
 	  module will be called cpufreq_conservative.
 
 	  For details, take a look at linux/Documentation/cpu-freq.
+
+	  If in doubt, say N.
+
+config CPU_FREQ_GOV_CLARITY
+	bool "'clarity' cpufreq governor"
+	depends on CPU_FREQ
+	select CPU_FREQ_GOV_COMMON
+	help
+	  'clarity' - this driver is rather similar to the 'ondemand'
+	  governor both in its source code and its purpose, the difference is
+	  its optimisation for better suitability in a battery powered
+	  environment.  The frequency is gracefully increased and decreased
+	  rather than jumping to 100% when speed is required.
 
 	  If in doubt, say N.
 
