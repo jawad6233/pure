@@ -2268,12 +2268,6 @@ WDI_Stop
   /*We have completed cleaning unlock now*/
   wpalMutexRelease(&pWDICtx->wptMutex);
 
-  /* Free the global variables */
-  wpalMemoryFree(gpHostWlanFeatCaps);
-  wpalMemoryFree(gpFwWlanFeatCaps);
-  gpHostWlanFeatCaps = NULL;
-  gpFwWlanFeatCaps = NULL;
-
   /*------------------------------------------------------------------------
     Fill in Event data and post to the Main FSM
   ------------------------------------------------------------------------*/
@@ -8256,7 +8250,7 @@ WDI_ProcessStopReq
   wpt_uint8*             pSendBuffer         = NULL;
   wpt_uint16             usDataOffset        = 0;
   wpt_uint16             usSendSize          = 0;
-  wpt_status             status;
+  wpt_status             status = WDI_STATUS_E_FAILURE;
   tHalMacStopReqMsg      halStopReq;
   /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -8270,7 +8264,7 @@ WDI_ProcessStopReq
      WPAL_TRACE( eWLAN_MODULE_DAL_CTRL, eWLAN_PAL_TRACE_LEVEL_WARN,
                  "%s: Invalid parameters", __func__);
      WDI_ASSERT(0);
-     goto failRequest;
+     goto free_wlan_feat_caps;
   }
 
   /*-----------------------------------------------------------------------
@@ -8285,7 +8279,7 @@ WDI_ProcessStopReq
               "Unable to get send buffer in stop req %pK %pK %pK",
                 pEventData, pwdiStopParams, wdiStopRspCb);
      WDI_ASSERT(0);
-     goto failRequest;
+     goto free_wlan_feat_caps;
   }
 
   /*-----------------------------------------------------------------------
@@ -8345,17 +8339,22 @@ WDI_ProcessStopReq
   /*-------------------------------------------------------------------------
     Send Stop Request to HAL
   -------------------------------------------------------------------------*/
-  return  WDI_SendMsg( pWDICtx, pSendBuffer, usSendSize,
+  status =  WDI_SendMsg( pWDICtx, pSendBuffer, usSendSize,
                        wdiStopRspCb, pEventData->pUserData, WDI_STOP_RESP);
-
+  goto free_wlan_feat_caps;
 fail:
    // Release the message buffer so we don't leak
    wpalMemoryFree(pSendBuffer);
 
-failRequest:
-   //WDA should have failure check to avoid the memory leak
-   return WDI_STATUS_E_FAILURE;
+free_wlan_feat_caps:
+  /* Free global wlan feature caps variables */
+  wpalMemoryFree(gpHostWlanFeatCaps);
+  wpalMemoryFree(gpFwWlanFeatCaps);
+  gpHostWlanFeatCaps = NULL;
+  gpFwWlanFeatCaps = NULL;
 
+   //WDA should have failure check to avoid the memory leak
+   return status;
 }/*WDI_ProcessStopReq*/
 
 /**
@@ -16743,6 +16742,7 @@ WDI_ProcessStopRsp
   /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
   wdiStopRspCb = (WDI_StopRspCb)pWDICtx->pfncRspCB;
+
   /*-------------------------------------------------------------------------
     Sanity check
   -------------------------------------------------------------------------*/
