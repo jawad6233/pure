@@ -15,9 +15,8 @@
 #include "cpufreq_governor.h"
 
 /* Conservative governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(90)
-#define DEF_FREQUENCY_DOWN_THRESHOLD		(30)
-#define MICRO_FREQUENCY_MIN_SAMPLE_RATE	(10000)
+#define DEF_FREQUENCY_UP_THRESHOLD		(80)
+#define DEF_FREQUENCY_DOWN_THRESHOLD		(20)
 #define DEF_FREQUENCY_STEP			(5)
 #define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define MAX_SAMPLING_DOWN_FACTOR		(10)
@@ -321,7 +320,6 @@ static struct attribute_group cs_attr_group_gov_pol = {
 static int cs_init(struct dbs_data *dbs_data)
 {
 	struct cs_dbs_tuners *tuners;
-	u64 idle_time;
 
 	tuners = kzalloc(sizeof(*tuners), GFP_KERNEL);
 	if (!tuners) {
@@ -336,23 +334,9 @@ static int cs_init(struct dbs_data *dbs_data)
 	tuners->freq_step = DEF_FREQUENCY_STEP;
 
 	dbs_data->tuners = tuners;
-	if (idle_time != -1ULL) {
-		/*
-		* * In nohz/micro accounting case we set the minimum frequency
-		* * not depending on HZ, but fixed (very low). The deferred
-		* * timer might skip some samples if idle/sleeping as needed.
-		* */
-		dbs_data->min_sampling_rate = MICRO_FREQUENCY_MIN_SAMPLE_RATE;
-	} else {
-		/* For correct statistics, we need 10 ticks for each measure */
-		dbs_data->min_sampling_rate = MIN_SAMPLING_RATE_RATIO *
-			jiffies_to_usecs(10);
-	}
-
-	if (notify)
-		cpufreq_register_notifier(&cs_cpufreq_notifier_block,
-					  CPUFREQ_TRANSITION_NOTIFIER);
-
+	dbs_data->min_sampling_rate = MIN_SAMPLING_RATE_RATIO *
+		jiffies_to_usecs(10);
+	mutex_init(&dbs_data->mutex);
 	return 0;
 }
 
